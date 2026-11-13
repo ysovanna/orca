@@ -39,6 +39,11 @@ export const SKILLS_CLI_AGENT_KEY_BY_TUI_AGENT = {
   'qwen-code': 'qwen-code',
   rovo: 'rovodev',
   hermes: 'hermes-agent',
+  // Hermes profile variants have no distinct community-skills --agent target.
+  'hermes-orchestrator': null,
+  'hermes-research': null,
+  'hermes-finance-fund-manager': null,
+  'hermes-qa-security': null,
   openclaw: 'openclaw',
   copilot: 'github-copilot',
   grok: 'grok',

@@ -1,3 +1,4 @@
+/* eslint-disable max-lines -- Why: single flat TUI-agent catalog table; splitting it would scatter per-agent entries across files */
 import type { TuiAgent } from './tui-agent'
 import {
   getOrcaCliCommandNameForPlatform,
@@ -271,6 +272,26 @@ const TUI_AGENT_CONFIG_SOURCE: Record<TuiAgent, TuiAgentConfigSource> = {
     // Bare hermes opens the classic REPL; --tui selects the hosted full-screen interface.
     launchCmd: 'hermes --tui',
     // Why: Hermes delivers the prompt via its startup-query contract, submitting only after the composer is ready.
+    promptInjectionMode: 'hermes-query'
+  },
+  'hermes-orchestrator': {
+    detectCmd: 'hermes',
+    launchCmd: 'hermes -p orchestrator --tui',
+    promptInjectionMode: 'hermes-query'
+  },
+  'hermes-research': {
+    detectCmd: 'hermes',
+    launchCmd: 'hermes -p research --tui',
+    promptInjectionMode: 'hermes-query'
+  },
+  'hermes-finance-fund-manager': {
+    detectCmd: 'hermes',
+    launchCmd: 'hermes -p finance-fund-manager --tui',
+    promptInjectionMode: 'hermes-query'
+  },
+  'hermes-qa-security': {
+    detectCmd: 'hermes',
+    launchCmd: 'hermes -p qa-security --tui',
     promptInjectionMode: 'hermes-query'
   },
   openclaw: {

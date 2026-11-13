@@ -40,6 +40,11 @@ const TUI_AGENT_KIND_BY_AGENT = {
   'mistral-vibe': 'mistral-vibe',
   'qwen-code': 'qwen-code',
   rovo: 'rovo',
+  // Hermes profile variants share the hermes telemetry kind; plain `hermes` stays last so reverse-mapping wins on it.
+  'hermes-orchestrator': 'hermes',
+  'hermes-research': 'hermes',
+  'hermes-finance-fund-manager': 'hermes',
+  'hermes-qa-security': 'hermes',
   hermes: 'hermes',
   openclaw: 'openclaw',
   copilot: 'copilot',

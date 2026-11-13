@@ -29,6 +29,12 @@ import { OMP_TRANSCRIPT_IMPORT } from '../../omp/omp-transcript-import'
 import { ANTIGRAVITY_LAUNCH_SPEC } from '../../antigravity/antigravity-acp-launch-spec'
 import { COPILOT_LAUNCH_SPEC } from '../../copilot/copilot-acp-launch-spec'
 import { HERMES_LAUNCH_SPEC } from '../../hermes/hermes-acp-launch-spec'
+import {
+  HERMES_ORCHESTRATOR_LAUNCH_SPEC,
+  HERMES_RESEARCH_LAUNCH_SPEC,
+  HERMES_FINANCE_FUND_MANAGER_LAUNCH_SPEC,
+  HERMES_QA_SECURITY_LAUNCH_SPEC
+} from '../../hermes/hermes-acp-launch-spec'
 import type { AcpLaunchSpec } from './acp-launch-contract'
 
 const GROK_LAUNCH_SPEC: AcpLaunchSpec = {
@@ -158,7 +164,11 @@ export const ACP_LAUNCH_SPECS: readonly AcpLaunchSpec[] = [
   OMP_LAUNCH_SPEC,
   ANTIGRAVITY_LAUNCH_SPEC,
   COPILOT_LAUNCH_SPEC,
-  HERMES_LAUNCH_SPEC
+  HERMES_LAUNCH_SPEC,
+  HERMES_ORCHESTRATOR_LAUNCH_SPEC,
+  HERMES_RESEARCH_LAUNCH_SPEC,
+  HERMES_FINANCE_FUND_MANAGER_LAUNCH_SPEC,
+  HERMES_QA_SECURITY_LAUNCH_SPEC
 ]
 
 export function acpLaunchSpecFor(agent: string): AcpLaunchSpec | null {

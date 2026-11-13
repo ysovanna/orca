@@ -19,17 +19,32 @@ const HERMES_SESSION_HISTORY: StructuredAgentSessionHistory = {
     })
 }
 
-export const HERMES_LAUNCH_SPEC: AcpLaunchSpec = {
-  agent: 'hermes',
-  command: 'hermes',
-  args: () => ['acp'],
-  env: {},
-  dialect: GENERIC_ACP_DIALECT,
-  loginCommand: agentSessionSetupFor('hermes')?.loginCommand ?? [],
-  account: directoryAccountBinding('HERMES_HOME', (homePath) => join(homePath, '.hermes')),
-  installDirectories: () => [],
-  // Only a session lists the models its account allows.
-  modelDiscovery: { kind: 'session', listingNamesConfiguredModel: false },
-  transcriptImport: null,
-  sessionHistory: HERMES_SESSION_HISTORY
+// A Hermes profile is chosen with `-p <profile>`, which re-homes HERMES_HOME to that profile's store.
+function hermesLaunchSpec(agent: AcpLaunchSpec['agent'], profile?: string): AcpLaunchSpec {
+  return {
+    agent,
+    command: 'hermes',
+    args: () => (profile ? ['-p', profile, 'acp'] : ['acp']),
+    env: {},
+    dialect: GENERIC_ACP_DIALECT,
+    loginCommand: agentSessionSetupFor('hermes')?.loginCommand ?? [],
+    account: directoryAccountBinding('HERMES_HOME', (homePath) => join(homePath, '.hermes')),
+    installDirectories: () => [],
+    // Only a session lists the models its account allows.
+    modelDiscovery: { kind: 'session', listingNamesConfiguredModel: false },
+    transcriptImport: null,
+    sessionHistory: HERMES_SESSION_HISTORY
+  }
 }
+
+export const HERMES_LAUNCH_SPEC = hermesLaunchSpec('hermes')
+export const HERMES_ORCHESTRATOR_LAUNCH_SPEC = hermesLaunchSpec(
+  'hermes-orchestrator',
+  'orchestrator'
+)
+export const HERMES_RESEARCH_LAUNCH_SPEC = hermesLaunchSpec('hermes-research', 'research')
+export const HERMES_FINANCE_FUND_MANAGER_LAUNCH_SPEC = hermesLaunchSpec(
+  'hermes-finance-fund-manager',
+  'finance-fund-manager'
+)
+export const HERMES_QA_SECURITY_LAUNCH_SPEC = hermesLaunchSpec('hermes-qa-security', 'qa-security')

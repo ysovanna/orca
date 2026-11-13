@@ -33,6 +33,10 @@ export type TuiAgent =
   | 'qwen-code'
   | 'rovo' // Rovo Dev
   | 'hermes' // Hermes Agent
+  | 'hermes-orchestrator' // Hermes · Orchestrator profile
+  | 'hermes-research' // Hermes · Research profile
+  | 'hermes-finance-fund-manager' // Hermes · Fund Manager profile
+  | 'hermes-qa-security' // Hermes · QA Security profile
   | 'openclaw'
   | 'copilot'
   | 'grok'

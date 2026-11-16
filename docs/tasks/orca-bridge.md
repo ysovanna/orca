@@ -49,19 +49,25 @@ ACTIVE: OB-0, OB-1, OB-3 running. ON COMPLETION: pause for the night — do NOT 
 
 ## Card Graph (Active Pipeline)
 
-Live table — maintained by OB-0 (orchestrator). Last sync: 2026-11-16 21:55 +07.
+Live table — maintained by OB-0 (orchestrator). Last sync: 2026-11-16 23:55 +07.
 
-| ID   | Card       | Title                                            | Assignee     | Parents   | Status @sync                                                           |
-| ---- | ---------- | ------------------------------------------------ | ------------ | --------- | ---------------------------------------------------------------------- |
-| OB-0 | t_03c15813 | Coordination throughout phase                    | orchestrator | -         | running (run 287)                                                      |
-| OB-1 | t_0341250c | Architecture doc + daemon HTTP gateway patch     | pi           | -         | running (run 286, re-dispatched 21:25; deliverables on disk untracked) |
-| OB-2 | t_f62d27e1 | ACP adapter module (card to agent prompt)        | pi           | OB-1      | blocked → awaiting OB-1 ⚠ adapter files exist, unknown writer          |
-| OB-3 | t_bc1557a7 | Pin version, disable auto-update, build env prep | home-lab     | -         | running (run 288, re-dispatched 21:40)                                 |
-| OB-4 | t_4f3bc487 | Build patched binary + install + smoke           | home-lab     | OB-2,OB-3 | blocked → awaiting OB-2+OB-3                                           |
-| OB-5 | t_e2f9955d | Security review: bridge auth + RCE surface       | qa-security  | OB-4      | blocked → awaiting OB-4                                                |
-| OB-6 | t_5ddddf6a | Hermes profile orca-bridge + smoke harness       | pi           | OB-2      | blocked → awaiting OB-2                                                |
+| ID   | Card       | Title                                            | Assignee     | Parents     | Status @sync                                                        |
+| ---- | ---------- | ------------------------------------------------ | ------------ | ----------- | ------------------------------------------------------------------- |
+| OB-0 | t_03c15813 | Coordination throughout phase                    | orchestrator | -           | running (run 287)                                                   |
+| OB-1 | t_0341250c | Architecture doc + daemon HTTP gateway patch     | pi           | -           | **DONE** — verified by OB-0, commit 7415062616 on ob1-http-gateway  |
+| OB-2 | t_f62d27e1 | ACP adapter module (card to agent prompt)        | pi           | OB-1 ✓      | blocked — NEEDS MANUAL UNBLOCK (`hermes kanban unblock t_f62d27e1`) |
+| OB-3 | t_bc1557a7 | Pin version, disable auto-update, build env prep | home-lab     | -           | **DONE** — verified by OB-0, commit 3f52a0e13d on hermes-patch      |
+| OB-4 | t_4f3bc487 | Build patched binary + install + smoke           | home-lab     | OB-2,OB-3 ✓ | blocked → awaiting OB-2 only                                        |
+| OB-5 | t_e2f9955d | Security review: bridge auth + RCE surface       | qa-security  | OB-4        | blocked → awaiting OB-4                                             |
+| OB-6 | t_5ddddf6a | Hermes profile orca-bridge + smoke harness       | pi           | OB-2        | blocked → awaiting OB-2                                             |
 
-Dependency edges (OB-1→OB-2, OB-2/OB-3→OB-4, OB-4→OB-5, OB-2→OB-6) were missing at creation; orchestrator added them 2026-11-16 and DB now reports `unsatisfied_parents` correctly on all four gated cards. Cards sit in `blocked`, so promotion is manual: OB-0 unblocks each successor only when its parents are done.
+Verified receipts (OB-0 independent evidence, full detail in card comments #248/#249):
+
+- OB-1: commit 7415062616 = exactly architecture.md + http-gateway.ts; gateway read-through conforms to contract v2 (loopback-only listen, ORCA_BRIDGE_PORT default 46133, timing-safe bearer BEFORE routing, inert when token unset, no socket mutation, no token logging). /health body adds `service` field — probes must assert ok==true, not exact body. DONE_CMD defect: `pnpm tc --noEmit` always exits 1 in this repo; correct gate is plain `pnpm tc`.
+- OB-3: commit 3f52a0e13d = exactly cjs(+2)/yml(+18); pin v1.4.258=c91a7a6ee3 recorded on-card for OB-4 + rebase cron; shared tree byte-matches.
+- OB-2 scope note (from OB-1): daemon-main.ts wiring of startHttpGateway is OB-2's job per architecture.md, not done yet.
+
+Dependency edges (OB-1→OB-2, OB-2/OB-3→OB-4, OB-4→OB-5, OB-2→OB-6) were missing at creation; orchestrator added them 2026-11-16 and DB now reports `unsatisfied_parents` correctly on all four gated cards. Cards sit in `blocked`, so promotion is manual: OB-0 unblocks each successor only when its parents are done. CURRENT RELEASE QUEUE: t_f62d27e1 (OB-2) — OB-0's context cannot call unblock (no tool; CLI guard), owner/default please run it, then OB-4 follows on OB-2 completion.
 
 Incident note (2026-11-16 ~20:24): every live run across the fleet crashed with "Kanban owner refused: Kanban execution unknown; retained by owner" (owner-daemon admission failure, not worker code). Owner set FULL ACCESS; `default` re-dispatched OB-0/OB-1/OB-3 at 21:24–21:40. All prior steering comments remain in force on each card.
 

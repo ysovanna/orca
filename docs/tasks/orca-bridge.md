@@ -43,25 +43,36 @@ Mitigation - Pin + Auto-Rebase Cron:
 
 Update cadence: roughly biweekly. 1 reconfig/month, 40 min + 1 interaction.
 
+## PAUSE STATE (2026-11-16 night)
+
+ACTIVE: OB-0, OB-1, OB-3 running. ON COMPLETION: pause for the night — do NOT release OB-2/4/5/6. OWNER HOLD comments posted on all four successors; they stay blocked until COO releases next session with fresh steer from live HEAD.
+
 ## Card Graph (Active Pipeline)
 
-Live table — maintained by OB-0 (orchestrator). Last sync: 2026-11-16 15:45 +07.
+Live table — maintained by OB-0 (orchestrator). Last sync: 2026-11-16 21:55 +07.
 
-| ID   | Card       | Title                                            | Assignee     | Parents   | Status @sync                      |
-| ---- | ---------- | ------------------------------------------------ | ------------ | --------- | --------------------------------- |
-| OB-0 | t_03c15813 | Coordination throughout phase                    | orchestrator | -         | running                           |
-| OB-1 | t_0341250c | Architecture doc + daemon HTTP gateway patch     | pi           | -         | running (branch ob1-http-gateway) |
-| OB-2 | t_f62d27e1 | ACP adapter module (card to agent prompt)        | pi           | OB-1      | blocked → awaiting OB-1           |
-| OB-3 | t_bc1557a7 | Pin version, disable auto-update, build env prep | home-lab     | -         | running                           |
-| OB-4 | t_4f3bc487 | Build patched binary + install + smoke           | home-lab     | OB-2,OB-3 | blocked → awaiting OB-2+OB-3      |
-| OB-5 | t_e2f9955d | Security review: bridge auth + RCE surface       | qa-security  | OB-4      | blocked → awaiting OB-4           |
-| OB-6 | t_5ddddf6a | Hermes profile orca-bridge + smoke harness       | pi           | OB-2      | blocked → awaiting OB-2           |
+| ID   | Card       | Title                                            | Assignee     | Parents   | Status @sync                                                           |
+| ---- | ---------- | ------------------------------------------------ | ------------ | --------- | ---------------------------------------------------------------------- |
+| OB-0 | t_03c15813 | Coordination throughout phase                    | orchestrator | -         | running (run 287)                                                      |
+| OB-1 | t_0341250c | Architecture doc + daemon HTTP gateway patch     | pi           | -         | running (run 286, re-dispatched 21:25; deliverables on disk untracked) |
+| OB-2 | t_f62d27e1 | ACP adapter module (card to agent prompt)        | pi           | OB-1      | blocked → awaiting OB-1 ⚠ adapter files exist, unknown writer          |
+| OB-3 | t_bc1557a7 | Pin version, disable auto-update, build env prep | home-lab     | -         | running (run 288, re-dispatched 21:40)                                 |
+| OB-4 | t_4f3bc487 | Build patched binary + install + smoke           | home-lab     | OB-2,OB-3 | blocked → awaiting OB-2+OB-3                                           |
+| OB-5 | t_e2f9955d | Security review: bridge auth + RCE surface       | qa-security  | OB-4      | blocked → awaiting OB-4                                                |
+| OB-6 | t_5ddddf6a | Hermes profile orca-bridge + smoke harness       | pi           | OB-2      | blocked → awaiting OB-2                                                |
 
-Dependency edges (OB-1→OB-2, OB-2/OB-3→OB-4, OB-4→OB-5, OB-2→OB-6) were missing at creation; orchestrator added them 2026-11-16. Cards sit in `blocked`, so promotion is manual: OB-0 unblocks each successor only when its parents are done.
+Dependency edges (OB-1→OB-2, OB-2/OB-3→OB-4, OB-4→OB-5, OB-2→OB-6) were missing at creation; orchestrator added them 2026-11-16 and DB now reports `unsatisfied_parents` correctly on all four gated cards. Cards sit in `blocked`, so promotion is manual: OB-0 unblocks each successor only when its parents are done.
+
+Incident note (2026-11-16 ~20:24): every live run across the fleet crashed with "Kanban owner refused: Kanban execution unknown; retained by owner" (owner-daemon admission failure, not worker code). Owner set FULL ACCESS; `default` re-dispatched OB-0/OB-1/OB-3 at 21:24–21:40. All prior steering comments remain in force on each card.
+
+⚠ Untracked-writer watch (OB-2 scope): `src/main/acp/bridge/orca-bridge-acp-adapter.ts` (mtime 20:51) and `orca-bridge-card-plan.ts` (20:33) appeared/changed during the 20:24–21:25 no-run window. Unknown writer (owner-side agent or orphaned child of crashed run 272). OB-2's worker must verify against architecture.md + pinned contracts and produce its own DONE_CMD evidence — do not adopt these files as done work.
 
 ## Pinned Contracts (orchestrator decisions — all cards build against these)
 
-- **Endpoint**: bind `127.0.0.1:9876` only. `GET /health` → 200 `{"ok":true}` iff `Authorization: Bearer $ORCA_BRIDGE_TOKEN`; else 401. Token never logged (OB-5 greps for it).
+Last sync: 2026-11-16 18:05 +07 (v2 — port ruling; see plans/orca-bridge/contexts/pinned_contracts_v2.md).
+
+- **Endpoint**: bind `127.0.0.1` only; port from `ORCA_BRIDGE_PORT` env, default **46133** (architecture.md is canonical; earlier 9876 pin retired via comments #230–#234). `GET /health` → 200 `{"ok":true}` iff `Authorization: Bearer $ORCA_BRIDGE_TOKEN`; else 401. Token never logged (OB-5 greps for it). Never hardcode the port.
+- **Daemon coexistence**: gateway must not mutate the canonical Unix-socket endpoint entry (src/main/daemon/AGENTS.md ownership protocol).
 - **Branch**: workers commit ONLY their own files onto their card branch; the shared tree's git index contains other cards' staged artifacts — `git add -A` is forbidden.
 - **Baseline pin**: upstream HEAD at kickoff = c91a7a6ee3 (v1.4.258); OB-3 records the authoritative pinned tag on its card.
 - **Reuse rule**: Hermes native ACP stdio adapter (`hermes-agent/.hermes/bin/hermes-acp.exe`) is reused, not rebuilt (t_a3506e66).

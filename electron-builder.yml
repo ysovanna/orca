@@ -1,0 +1,18 @@
+# Hermes fork overlay for bare `electron-builder` invocations.
+# npm scripts pass config/electron-builder.config.cjs directly; this file extends it so manual builds get identical behavior.
+#
+# Pin reference: upstream stablyai/orca tag v1.4.258 (commit c91a7a6ee3, package.json version 1.4.258).
+# hermes-patch rebases onto a newer upstream tag only deliberately — never via auto-update.
+
+extends: ./config/electron-builder.config.cjs
+
+# Auto-update disabled at the feed level: channel "none" makes packaged builds emit none.yml metadata
+# and an app-update.yml that requests the nonexistent "none" channel from GitHub, so installed patched
+# builds can never be silently replaced by upstream releases (the check resolves 404 → no-update).
+# Mirrors the publish block in config/electron-builder.config.cjs used by the npm build scripts.
+publish:
+  provider: github
+  owner: stablyai
+  repo: orca
+  channel: 'none'
+  releaseType: draft

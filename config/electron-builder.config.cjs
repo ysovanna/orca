@@ -767,6 +767,8 @@ module.exports = {
     provider: 'github',
     owner: 'stablyai',
     repo: devChannelRepo ?? 'orca',
+    // Hermes fork pin: "none" emits none.yml metadata only, so default-channel clients never see this build's feed (see electron-builder.yml).
+    channel: 'none',
     // Keep main-repo releases draft until release-cut verifies all assets; early --publish always would expose missing Windows installers.
     releaseType: devChannelRepo ? 'prerelease' : 'draft'
   }

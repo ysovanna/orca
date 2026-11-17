@@ -6,7 +6,7 @@ import { agentSessionSetupFor } from '../../shared/agent-session/lifecycle/agent
 import {
   resumeInvocationFromOptions,
   type StructuredAgentSessionHistory
-} from '../native-chat/conversation-adoption/structured-agent-cli-conversations'
+} from '../native-chat/structured-agent-cli-conversations'
 
 // Chats and terminals share Hermes' session store under ~/.hermes.
 const HERMES_SESSION_HISTORY: StructuredAgentSessionHistory = {

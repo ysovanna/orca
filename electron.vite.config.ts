@@ -38,7 +38,14 @@ const BUNDLED_MAIN_DEPENDENCIES = new Set([
   'remark-gfm',
   'hast-util-from-html-isomorphic',
   // Windows NSIS copies app.asar before external resources; bootstrap must not race resources/node_modules.
-  'zod'
+  'zod',
+  // Bridge adapter pulls the launch-registry into daemon-entry; the relocated daemon-host mirrors no npm packages,
+  // so inline the pure-JS closure (plain-node-entry-guard: bare requires outside the mirror list are fatal).
+  'proper-lockfile',
+  'graceful-fs',
+  'retry',
+  'signal-exit',
+  'jsonc-parser'
 ])
 // Official CI alone injects ORCA_BUILD_IDENTITY (stable|rc) and ORCA_POSTHOG_WRITE_KEY secrets; other builds substitute literal null.
 // Compile-time substitution gates telemetry at module load without runtime env fallback; declarations live in src/types/build-constants.d.ts.

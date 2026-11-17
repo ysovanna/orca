@@ -4,6 +4,8 @@ import type { DaemonFileLog } from '../observability/daemon-file-log'
 import { readTerminalSpawnAdmissionArg } from '../admission/terminal-spawn-admission-mode'
 import { automaticWorkMarkerPathFor } from '../admission/automatic-work-run-marker-store'
 import { defaultHostTerminalLedgerDir } from '../admission/host-terminal-ledger'
+import { startHttpGateway, stopHttpGateway } from '../endpoint/http-gateway'
+import { registerOrcaBridgeRoutes } from '../../acp/bridge/orca-bridge-sessions'
 
 export type DaemonStartOptions = {
   socketPath: string
@@ -84,9 +86,16 @@ export async function startDaemon(opts: DaemonStartOptions): Promise<DaemonHandl
   })
 
   await server.start()
+  // Inert in shipped builds: the bridge gateway stays down unless ORCA_BRIDGE_TOKEN is set.
+  await startHttpGateway()
+  const unregisterBridgeRoutes = registerOrcaBridgeRoutes()
 
   return {
-    shutdown: () => server.shutdown(),
+    shutdown: async () => {
+      unregisterBridgeRoutes()
+      await stopHttpGateway()
+      await server.shutdown()
+    },
     recordOrderlyExit: () => server.automaticWork.recordOrderlyExit(),
     recordStopRequested: () => server.automaticWork.recordStopRequested(),
     killLiveSessionGroupsSync: () => server.host.killLiveSessionGroupsSync()

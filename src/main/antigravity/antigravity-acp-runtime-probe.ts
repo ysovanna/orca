@@ -114,7 +114,10 @@ async function initializeFromDisposableFolder(
     )
     outcome.failed = true
   }
-  await rm(folder, { recursive: true, force: true })
+  // Windows can still hold the just-exited child's folder; losing that cleanup says nothing about it.
+  try {
+    await rm(folder, { recursive: true, force: true, maxRetries: 20, retryDelay: 250 })
+  } catch {}
   return outcome
 }
 

@@ -3,11 +3,20 @@
 
 import { homedir } from 'node:os'
 import { ACP_LAUNCH_SPECS, acpLaunchSpecFor } from '../launch/acp-launch-registry'
-import { resolveAcpLaunchCommand } from '../launch/acp-launch-command'
+import {
+  acpLaunchSpecForAccount,
+  resolveAcpLaunchCommand,
+  selectAcpHostAccountHome
+} from '../launch/acp-launch-command'
 import { createAcpAgentConnection } from '../process/acp-agent-connection'
 import type { ConnectAcpAgent } from '../process/acp-structured-connection'
 import type { ProviderProcessLaunch } from '../../provider-process/provider-process-launch'
-import type { AcpLaunchSpec } from '../launch/acp-launch-contract'
+import type { AcpHostBackendSettings, AcpLaunchSpec } from '../launch/acp-launch-contract'
+import {
+  resolveHostStructuredAgentLaunchEnvironment,
+  type LaunchEnvironmentSettings
+} from '../../runtime/agent-session/launch/structured-agent-launch-support'
+import { getProfileUserDataPath } from '../../orca-profiles/profile-storage-paths'
 import { BridgeAcpSession } from './orca-bridge-acp-session'
 import type { BridgeCard } from './orca-bridge-card-plan'
 
@@ -46,7 +55,12 @@ export type OrcaBridgeAcpAdapterDeps = {
   environment?: () => Record<string, string>
   stateDirectory?: string
   dataDirectory?: string | null
+  /** Host-backend selection input; the daemon has no settings store, so absent reads as app defaults. */
+  hostBackendSettings?: AcpHostBackendSettings
 }
+
+/** What a card runs: the launch line and the spec (agent's own or host backend) it came from. */
+export type BridgeAcpLaunch = ProviderProcessLaunch & { spec: AcpLaunchSpec }
 
 /** Agents the bridge can take as a kanban assignee without further code. */
 export function bridgeAssignableAgents(): string[] {
@@ -67,12 +81,9 @@ export class OrcaBridgeAcpAdapter {
 
   /** Launches the assignee and starts its ACP session; throws when it has no launch spec. */
   async open(card: BridgeCard, signal?: AbortSignal): Promise<BridgeAcpSession> {
-    const spec = acpLaunchSpecFor(card.assignee)
-    if (!spec) {
-      throw new Error(`No ACP launch spec for kanban assignee "${card.assignee}"`)
-    }
     const task = { ...card, cwd: card.cwd ?? homedir() }
-    const launch = await this.launchFor(spec, task)
+    const launch = await buildBridgeAcpLaunch(task, this.deps)
+    const spec = launch.spec
     const authMethodId = bridgeAuthMethodId(spec, launch.env ?? {})
     const session = new BridgeAcpSession(
       spec,
@@ -113,36 +124,69 @@ export class OrcaBridgeAcpAdapter {
       skipped: view.skipped
     }
   }
+}
 
-  /** The agent's own launch line, built from its spec the way a chat's would be. */
-  private async launchFor(spec: AcpLaunchSpec, card: BridgeCard): Promise<ProviderProcessLaunch> {
-    const env = { ...(this.deps.environment?.() ?? readBaseEnvironment()) }
-    const home = await spec.account.resolve({
-      launchEnv: process.env,
-      stateDirectory: this.deps.stateDirectory ?? ''
-    })
-    Object.assign(env, spec.account.environment(home, env))
-    const envToDelete = spec.scrubEnvironment?.(env, process.env) ?? []
-    Object.assign(env, spec.env)
-    const homePath = env.HOME ?? env.USERPROFILE ?? homedir()
-    const { command, prefixArgs } = resolveAcpLaunchCommand(spec, env, {
-      homePath,
-      dataDirectory: this.deps.dataDirectory ?? null
-    })
-    return {
-      command,
-      args: [
-        ...prefixArgs,
-        ...spec.args({
-          fullAccess: card.permissionMode === 'full-access',
-          pluginDir: null,
-          ...(card.model && spec.launchesWithModel ? { model: card.model } : {})
-        })
-      ],
-      cwd: card.cwd ?? homePath,
-      env,
-      envToDelete
-    }
+/** The card's launch line, resolved the way a chat's is; spawns nothing. */
+export async function buildBridgeAcpLaunch(
+  card: BridgeCard,
+  deps: OrcaBridgeAcpAdapterDeps = {}
+): Promise<BridgeAcpLaunch> {
+  const rawSpec = acpLaunchSpecFor(card.assignee)
+  if (!rawSpec) {
+    throw new Error(`No ACP launch spec for kanban assignee "${card.assignee}"`)
+  }
+  // A compatible host program pins the chat's account home, so its spec owns account and command.
+  const spec = (await bridgeHostBackendSpec(rawSpec, deps)) ?? rawSpec
+  const env = { ...(deps.environment?.() ?? readBaseEnvironment()) }
+  const home = await spec.account.resolve({
+    launchEnv: process.env,
+    stateDirectory: deps.stateDirectory ?? ''
+  })
+  Object.assign(env, spec.account.environment(home, env))
+  const envToDelete = spec.scrubEnvironment?.(env, process.env) ?? []
+  Object.assign(env, spec.env)
+  const homePath = env.HOME ?? env.USERPROFILE ?? homedir()
+  const { command, prefixArgs } = resolveAcpLaunchCommand(spec, env, {
+    homePath,
+    dataDirectory: deps.dataDirectory ?? null
+  })
+  return {
+    command,
+    args: [
+      ...prefixArgs,
+      ...spec.args({
+        fullAccess: card.permissionMode === 'full-access',
+        pluginDir: null,
+        ...(card.model && spec.launchesWithModel ? { model: card.model } : {})
+      })
+    ],
+    cwd: card.cwd ?? homePath,
+    env,
+    envToDelete,
+    spec
+  }
+}
+
+/** The host backend's spec when its program signs in for sessions on this host, else null. */
+async function bridgeHostBackendSpec(
+  spec: AcpLaunchSpec,
+  deps: OrcaBridgeAcpAdapterDeps
+): Promise<AcpLaunchSpec | null> {
+  if (!spec.hostBackend) {
+    return null
+  }
+  const settings = (deps.hostBackendSettings ?? {}) as LaunchEnvironmentSettings
+  try {
+    const home = await selectAcpHostAccountHome(
+      spec,
+      await resolveHostStructuredAgentLaunchEnvironment(spec.agent, settings),
+      // Lazily: importing this module must not require an installed AppEnvironment.
+      deps.stateDirectory || getProfileUserDataPath(),
+      settings
+    )
+    return home ? acpLaunchSpecForAccount(spec, home) : null
+  } catch {
+    return null
   }
 }
 

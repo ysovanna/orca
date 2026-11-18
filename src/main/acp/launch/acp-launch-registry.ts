@@ -33,7 +33,8 @@ import {
   HERMES_ORCHESTRATOR_LAUNCH_SPEC,
   HERMES_RESEARCH_LAUNCH_SPEC,
   HERMES_FINANCE_FUND_MANAGER_LAUNCH_SPEC,
-  HERMES_QA_SECURITY_LAUNCH_SPEC
+  HERMES_QA_SECURITY_LAUNCH_SPEC,
+  PI_LAUNCH_SPEC
 } from '../../hermes/hermes-acp-launch-spec'
 import type { AcpLaunchSpec } from './acp-launch-contract'
 
@@ -168,7 +169,8 @@ export const ACP_LAUNCH_SPECS: readonly AcpLaunchSpec[] = [
   HERMES_ORCHESTRATOR_LAUNCH_SPEC,
   HERMES_RESEARCH_LAUNCH_SPEC,
   HERMES_FINANCE_FUND_MANAGER_LAUNCH_SPEC,
-  HERMES_QA_SECURITY_LAUNCH_SPEC
+  HERMES_QA_SECURITY_LAUNCH_SPEC,
+  PI_LAUNCH_SPEC
 ]
 
 export function acpLaunchSpecFor(agent: string): AcpLaunchSpec | null {

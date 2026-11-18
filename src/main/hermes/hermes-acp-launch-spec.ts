@@ -48,3 +48,5 @@ export const HERMES_FINANCE_FUND_MANAGER_LAUNCH_SPEC = hermesLaunchSpec(
   'finance-fund-manager'
 )
 export const HERMES_QA_SECURITY_LAUNCH_SPEC = hermesLaunchSpec('hermes-qa-security', 'qa-security')
+// Pi is the Hermes binary running its own profile.
+export const PI_LAUNCH_SPEC = hermesLaunchSpec('pi', 'pi')

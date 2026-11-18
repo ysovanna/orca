@@ -1,3 +1,12 @@
+## Git Discipline (all agents)
+- Worktree per task only: `git worktree add ../wt-<agent>-<task> -b <agent>/<task-id>-<slug>`.
+  Never edit in the main checkout; never switch its branch. Canonical integration branch: `hermes-patch` (not master).
+- Push only your brief branch ($AGENT_BRANCH). Force only --force-with-lease, own branch.
+- Every commit ends with trailer line: `Task: <task-id>`.
+- hermes-patch and tags are integrator-only (ff-merge after gate). Never merge yourself.
+- Tests must fail loudly on missing prerequisites; no silent skips.
+- HANDOFF.md is integrator-written; put your handoff text in the task result.
+
 # Useful Commands
 
 - **Typecheck**: `pnpm tc` (or `tc:node` / `tc:cli` / `tc:web`)

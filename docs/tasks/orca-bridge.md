@@ -47,7 +47,16 @@ Update cadence: roughly biweekly. 1 reconfig/month, 40 min + 1 interaction.
 
 ACTIVE: OB-0, OB-1, OB-3 running. ON COMPLETION: pause for the night — do NOT release OB-2/4/5/6. OWNER HOLD comments posted on all four successors; they stay blocked until COO releases next session with fresh steer from live HEAD.
 
-## Card Graph (Active Pipeline)
+## Pipeline — FINAL (2026-11-18)
+
+| Card | Scope | Status | Gate evidence |
+|---|---|---|---|
+| OB-1..OB-8 | gateway/adapter/pin/build/security/harness/AppEnv/hermes-ACP | done | SMOKE PASS 5/5 on installed binary; catalog hermes+4 profiles available |
+
+Canonical branch: hermes-patch = ob4-integration tip (c17b927150), pushed to ysova-fork.
+Token doctrine: HKCU ORCA_BRIDGE_TOKEN live source; C:/HermesOS/Tools/.orca/bridge-token mirrors it (COO syncs after rotation).
+
+## Card Graph (Active Pipeline) — SUPERSEDED by FINAL table above
 
 Live table — maintained by OB-0 (orchestrator). Last sync: 2026-11-16 23:55 +07.
 

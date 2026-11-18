@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Pre-push guard for single-writer repos. Install per references/repo-bootstrap.md.
+# Rejects: pushes to master/main/tags; branch != $AGENT_BRANCH (when set);
+# new commits missing 'Task:' trailer.
+set -eu
+REFS_IN="$(cat)"
+current="$(git rev-parse --abbrev-ref HEAD)"
+
+if [ -n "${AGENT_BRANCH:-}" ] && [ "$current" != "$AGENT_BRANCH" ]; then
+  echo "pre-push: on '$current' but brief says '$AGENT_BRANCH'. Use your worktree." >&2
+  exit 1
+fi
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  [ -z "$local_ref" ] && continue
+  case "$remote_ref" in
+    refs/tags/*|refs/heads/master|refs/heads/main)
+      if [ "${INTEGRATOR:-}" != "1" ]; then
+        echo "pre-push: $remote_ref is integrator-only (ff-merge after gate)." >&2
+        exit 1
+      fi ;;
+  esac
+  [ "$local_sha" = "0000000000000000000000000000000000000000" ] && continue
+  range="${remote_sha}..${local_sha}"
+  [ "$remote_sha" = "0000000000000000000000000000000000000000" ] && range="$local_sha"
+  while read -r sha; do
+    [ -z "$sha" ] && continue
+    if ! git show -s --format=%B "$sha" | grep -q '^Task: '; then
+      echo "pre-push: commit $sha missing 'Task: <id>' trailer." >&2
+      exit 1
+    fi
+  done < <(git rev-list "$range" --not --branches='*' 2>/dev/null || git rev-list "$range")
+done <<< "$REFS_IN"
+exit 0

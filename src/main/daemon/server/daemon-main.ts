@@ -6,6 +6,8 @@ import { automaticWorkMarkerPathFor } from '../admission/automatic-work-run-mark
 import { defaultHostTerminalLedgerDir } from '../admission/host-terminal-ledger'
 import { startHttpGateway, stopHttpGateway } from '../endpoint/http-gateway'
 import { registerOrcaBridgeRoutes } from '../../acp/bridge/orca-bridge-sessions'
+import { registerOrcaBridgeRunRoutes } from '../../acp/bridge/orca-bridge-run-proxy'
+import { createRuntimeRunProxyServices } from '../../acp/bridge/orca-bridge-run-runtime'
 import { installDaemonBridgeAppEnvironment } from './daemon-app-environment'
 
 export type DaemonStartOptions = {
@@ -91,11 +93,16 @@ export async function startDaemon(opts: DaemonStartOptions): Promise<DaemonHandl
   installDaemonBridgeAppEnvironment(opts.appVersion)
   // Inert in shipped builds: the bridge gateway stays down unless ORCA_BRIDGE_TOKEN is set.
   await startHttpGateway()
-  const unregisterBridgeRoutes = registerOrcaBridgeRoutes()
+  const unregisterBridgeRoutes = [
+    registerOrcaBridgeRoutes(),
+    registerOrcaBridgeRunRoutes(createRuntimeRunProxyServices())
+  ]
 
   return {
     shutdown: async () => {
-      unregisterBridgeRoutes()
+      for (const off of unregisterBridgeRoutes) {
+        off()
+      }
       await stopHttpGateway()
       await server.shutdown()
     },

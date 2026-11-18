@@ -1,6 +1,5 @@
 // Bridge session registry and the /v1 routes that let an external COO dispatch, steer and gate cards.
 
-import type { IncomingMessage } from 'node:http'
 import { delimiter } from 'node:path'
 import { homedir } from 'node:os'
 import { registerBridgeRoute, sendBridgeJson } from '../../daemon/endpoint/http-gateway'
@@ -13,9 +12,7 @@ import {
   type BridgeCard
 } from './orca-bridge-acp-adapter'
 import { parseBridgeCard } from './orca-bridge-card-plan'
-
-/** Largest card, steer or gate body the bridge reads; larger bodies are rejected as invalid. */
-export const BRIDGE_BODY_LIMIT = 1_000_000
+import { readJsonBody, textField, badRequest, notFound } from './orca-bridge-request-body'
 
 export type BridgeAgentEntry = {
   agent: string
@@ -48,39 +45,6 @@ const adapter = new OrcaBridgeAcpAdapter()
 
 function sessionOf(id: string): BridgeAcpSession | null {
   return sessions.get(id) ?? null
-}
-
-function notFound(res: Parameters<typeof sendBridgeJson>[0], id: string): void {
-  sendBridgeJson(res, 404, { error: 'not_found', id })
-}
-
-/** Body problems are the caller's fault, so they answer 400 instead of the gateway's 500. */
-async function readJsonBody(req: IncomingMessage): Promise<unknown> {
-  const chunks: Buffer[] = []
-  let size = 0
-  for await (const chunk of req) {
-    size += Buffer.byteLength(chunk as Buffer)
-    if (size > BRIDGE_BODY_LIMIT) {
-      throw new Error(`request body exceeds the ${BRIDGE_BODY_LIMIT} byte bridge limit`)
-    }
-    chunks.push(Buffer.from(chunk as Buffer))
-  }
-  if (size === 0) {
-    throw new Error('a JSON request body is required')
-  }
-  return JSON.parse(Buffer.concat(chunks).toString('utf8')) as unknown
-}
-
-function textField(body: unknown, name: string): string {
-  const value = (body as Record<string, unknown> | null)?.[name]
-  if (typeof value !== 'string' || value.length === 0) {
-    throw new Error(`${name} must be a non-empty string`)
-  }
-  return value
-}
-
-function badRequest(res: Parameters<typeof sendBridgeJson>[0], error: unknown): void {
-  sendBridgeJson(res, 400, { error: 'invalid_request', message: String(error) })
 }
 
 /** Registers the bridge route bodies on the existing gateway; returns the unregister closure. */

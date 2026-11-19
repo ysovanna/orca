@@ -11,6 +11,8 @@ export type BridgeSessionView = {
   id: string
   agent: string
   sessionId: string
+  /** The model this session runs on: the COO's pin once carried, else null for the agent default. */
+  model: string | null
   cwd: string
   state: BridgeSessionState
   stopReason: string | null

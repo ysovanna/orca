@@ -41,6 +41,8 @@ export class BridgeAcpSession {
   readonly skipped: string[] = []
   pendingGate: BridgeGateRequest | null = null
   private caps: BridgeAgentCapabilities
+  /** The model this session runs on; the launch line already carries it when the spec takes one. */
+  private model: string | null
   private acpSessionId = ''
   private gate: { settle: (allow: boolean) => void } | null = null
   private unsubscribe: (() => void) | null = null
@@ -54,6 +56,7 @@ export class BridgeAcpSession {
     this.agent = spec.agent
     this.cwd = card.cwd ?? ''
     this.caps = readBridgeCapabilities(spec, {})
+    this.model = card.model && spec.launchesWithModel ? card.model : null
   }
 
   /** initialize → authenticate → session/new; the child is live and addressable after this. */
@@ -135,6 +138,7 @@ export class BridgeAcpSession {
       id: this.id,
       agent: this.agent,
       sessionId: this.acpSessionId,
+      model: this.model,
       cwd: this.cwd,
       state: this.state,
       stopReason: this.stopReason,
@@ -195,15 +199,12 @@ export class BridgeAcpSession {
             )
           )
           break
-        case 'session/set_model':
-          await wait(
-            this.connection.setModel(
-              String(step.params.modelId),
-              undefined,
-              BRIDGE_OPTION_TIMEOUT_MS
-            )
-          )
+        case 'session/set_model': {
+          const modelId = String(step.params.modelId)
+          await wait(this.connection.setModel(modelId, undefined, BRIDGE_OPTION_TIMEOUT_MS))
+          this.model = modelId
           break
+        }
         case 'session/prompt':
           this.finishTurn(
             (await wait(this.connection.prompt(step.params.prompt as ContentBlock[]))).stopReason

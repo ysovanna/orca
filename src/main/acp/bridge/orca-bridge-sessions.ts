@@ -129,11 +129,19 @@ export function registerOrcaBridgeRoutes(): () => void {
           badRequest(res, error)
           return
         }
-        if (!acpLaunchSpecFor(card.assignee)) {
+        const spec = acpLaunchSpecFor(card.assignee)
+        if (!spec) {
           sendBridgeJson(res, 503, {
             error: 'agent_unavailable',
             message: `no ACP launch spec for assignee "${card.assignee}"`
           })
+          return
+        }
+        if (card.model && spec.modelDiscovery.kind === 'unavailable') {
+          badRequest(
+            res,
+            new Error(`${spec.agent} cannot pin a model: ${spec.modelDiscovery.reason}`)
+          )
           return
         }
         let session: BridgeAcpSession

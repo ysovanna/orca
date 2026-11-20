@@ -32,7 +32,9 @@ export class StructuredAgentRegistry {
     for (const registration of registrations) {
       const { agent, capabilities } = registration.definition
       if (byAgent.has(agent)) {
-        throw new Error(`structured agent ${agent} is registered twice`)
+        // Why not fatal: a duplicate registration must not take every other agent's chats down.
+        console.warn(`[structured-agents] ignoring the second registration of ${agent}`)
+        continue
       }
       const missing = requiredAdapterMethods(capabilities, registration.adapter).find(
         (method) => !registration.adapter[method]

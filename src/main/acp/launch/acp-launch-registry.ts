@@ -36,6 +36,7 @@ import {
   HERMES_QA_SECURITY_LAUNCH_SPEC,
   PI_LAUNCH_SPEC
 } from '../../hermes/hermes-acp-launch-spec'
+import { loadCustomAcpLaunchSpecs } from './custom-acp-launch-specs'
 import type { AcpLaunchSpec } from './acp-launch-contract'
 
 const GROK_LAUNCH_SPEC: AcpLaunchSpec = {
@@ -158,7 +159,7 @@ const OMP_LAUNCH_SPEC: AcpLaunchSpec = {
   sessionHistory: OMP_SESSION_HISTORY
 }
 
-export const ACP_LAUNCH_SPECS: readonly AcpLaunchSpec[] = [
+const BUILT_IN_ACP_LAUNCH_SPECS: readonly AcpLaunchSpec[] = [
   GROK_LAUNCH_SPEC,
   OPENCODE_LAUNCH_SPEC,
   OPENCODE2_LAUNCH_SPEC,
@@ -171,6 +172,20 @@ export const ACP_LAUNCH_SPECS: readonly AcpLaunchSpec[] = [
   HERMES_FINANCE_FUND_MANAGER_LAUNCH_SPEC,
   HERMES_QA_SECURITY_LAUNCH_SPEC,
   PI_LAUNCH_SPEC
+]
+
+// Built-ins win, so a custom file can never redirect a known agent to another program.
+const BUILT_IN_AGENTS = new Set<string>(BUILT_IN_ACP_LAUNCH_SPECS.map((spec) => spec.agent))
+
+export const ACP_LAUNCH_SPECS: readonly AcpLaunchSpec[] = [
+  ...BUILT_IN_ACP_LAUNCH_SPECS,
+  ...loadCustomAcpLaunchSpecs().filter((spec) => {
+    if (BUILT_IN_AGENTS.has(spec.agent)) {
+      console.warn(`[acp] ignored custom agent ${spec.agent}: a built-in agent has that name.`)
+      return false
+    }
+    return true
+  })
 ]
 
 export function acpLaunchSpecFor(agent: string): AcpLaunchSpec | null {

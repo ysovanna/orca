@@ -101,3 +101,25 @@ Last sync: 2026-11-16 18:05 +07 (v2 — port ruling; see plans/orca-bridge/conte
 ---
 
 _Drafted+amended 2026-11-13. Owner approved AAA._
+
+---
+
+## FREEZE — 2026-11-19 (owner decision)
+
+**Status: FROZEN at `d765e56d9fb`. No further install waves on this lineage.**
+
+Why:
+- Upstream tag line diverged: `v1.4.264` shares **no common ancestor** with `hermes-patch`; even our pin `v1.4.258` is not an ancestor of it. A clean rebase was never possible — every upstream adoption = full manual port against 1000+ commits. Maintenance tax on a fast-moving Electron IDE outruns the benefit.
+- Cost evidence: one feature wave ≈ half a day (3 builds, 1 NSIS hang, two builders colliding on `dist/`).
+
+What stays LIVE (installed build):
+- Bridge gateway on `127.0.0.1:46133` — hermes-profile dispatch + gate/steer verified working (OB-7 smoke 5/5). Use as-is; do not rebuild/reinstall.
+
+Default workflow going forward:
+- Antigravity red-team/work → host `agy acp` CLI directly (proven, minutes).
+- OpenCode / Pi workers → direct CLIs or `delegate_task`.
+- Bridge reserved for hermes profiles only.
+
+Archived work (branches on fork, nothing lost): `pi/bridge-model` (BRIDGE-MODEL t_5b4f33fb done, unmerged), `pi/agy-bridge-host`, `pi/agy-win-pin`.
+
+Revisit condition: port to a current upstream release ONLY if ≥30 days of real use proves the gateway indispensable beyond what host CLIs cover. Weekly rebase-check cron `5d16f8162205` PAUSED (assumed fast-forwardable upstream — would report fiction).
